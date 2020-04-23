@@ -1,30 +1,34 @@
 import React, {useEffect, useState} from "react";
 import {getWeather, UNIT} from "../api";
+import './weather.scss';
 
 /**
  * @return {null}
  */
-function Weather({isGoogleReady, isSearchMode, address}) {
+function Weather({isGoogleReady, isSearchMode, address, setInputVal, inputVal}) {
 
     const [currentLocation, setCurrentLocation] = useState();
-    const [currentWeatherFahrenheit, setCurrentWeatherFahrenheit] = useState(null);
+    const [currentUnit, setCurrentUnit] = useState(UNIT.FAHRENHEIT);
+    const [currentWeather, setCurrentWeather] = useState(null);
+    const [currentDay, setCurrentDay] = useState(0);
 
     // SIDE EFFECTS ----------------------------------------------------------------------------------------------------
 
     useEffect(() => {
         if (currentLocation) {
-            getWeather(currentLocation, UNIT.FAHRENHEIT).then(setCurrentWeatherFahrenheit);
+            getWeather(currentLocation, currentUnit).then(setCurrentWeather);
         } else {
-            setCurrentWeatherFahrenheit(null);
+            setCurrentWeather(null);
         }
-    }, [currentLocation]);
+    }, [currentLocation, currentUnit]);
 
     useEffect(() => {
         if (!isSearchMode) {
             navigator.geolocation.getCurrentPosition(pos => {
                 const {latitude: lat, longitude: lon} = pos.coords;
                 setCurrentLocation({lat, lon});
-            })
+                setInputVal(`${lat},${lon}`);
+            });
         }
     }, [isSearchMode]);
 
@@ -54,6 +58,7 @@ function Weather({isGoogleReady, isSearchMode, address}) {
                     if (res && res.length) {
                         const {location} = res[0].geometry;
                         cb({lat:location.lat(), lon: location.lng()});
+                        setInputVal(address);
                     }
                 });
             } catch (e) {
@@ -63,30 +68,65 @@ function Weather({isGoogleReady, isSearchMode, address}) {
         autocompleteService.getQueryPredictions({input}, getLocationCB.bind(null, setCurrentLocation));
     }
 
-    console.log(currentWeatherFahrenheit);
-    if (currentWeatherFahrenheit) {
-        const {current} = currentWeatherFahrenheit;
-        const {humidity, rain, dt, temp, wind_speed, weather} = current;
+    if (currentWeather) {
+        const {current, daily} = currentWeather;
+        let {humidity, rain, dt, temp, wind_speed, weather} = current;
+        temp = Math.round(temp);
         let description;
+        let icon;
         if (weather && weather.length) {
             description = weather[0].description;
+            icon = weather[0].icon;
         }
+        const iconURL = `url(http://openweathermap.org/img/wn/${icon}@2x.png)`;
         const today = new Date(dt*1000);
         const weeks = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const hours = today.getHours();
-        const todayString = `${weeks[today.getDay()]} ${hours % 12}:00 ${hours > 11 ? 'PM' : 'AM'}`;
+        const todayString = `${weeks[today.getDay()]} ${hours % 12 ? hours % 12 : 12}:00 ${hours > 11 ? 'PM' : 'AM'}`;
+        const title = inputVal.split(',').slice(1,3).join(',');
+
+        let fspan = <span>°F</span>;
+        let cspan = <span>°C</span>;
+        if (currentUnit === UNIT.FAHRENHEIT) {
+            cspan = <div className={"link"} onClick={() => setCurrentUnit(UNIT.CELSIUS)}>{cspan}</div>;
+        } else {
+            fspan = <div className={"link"} onClick={() => setCurrentUnit(UNIT.FAHRENHEIT)}>{fspan}</div>;
+        }
+
+        const dailyCards = daily.map((props,i) =>
+            <DailyWeather {...props} key={props.dt} active={currentDay === i} handleClick={() => setCurrentDay(i)}/>
+        );
+
 
         return (
             <div className={'weather'}>
                 <div className={'current'}>
-                    <div className={"left"}>
+                    <div className={"top"}>
+                        <div className={"title"}>{isSearchMode ? title : ''}</div>
                         <div className={"time"}>{todayString}</div>
-                        <div className={"description"}>{description}</div>
+                        {description ? (<div className={"description"}>{description}</div>) : null}
                     </div>
-                    <div className={"right"}>
-                        <div className={"precipitation"}>Precipitation: {`${rain ? rain : 0}%`}</div>
-                        <div className={"humidity"}>Humidity: {`${humidity}%`}</div>
-                        <div className={"wind"}>Wind: {`${wind_speed} mph`}</div>
+                    <div className={"middle"}>
+                        <div className={"temp-container"}>
+                            {icon ? <div className={"image"} style={{backgroundImage:iconURL}}/> : null}
+                            <div className={"temp"}>{temp}</div>
+                            <div className={"temp-options"}>
+                                {fspan} &nbsp; | &nbsp; {cspan}
+                            </div>
+                        </div>
+                        <div className={"right"}>
+                            <div className={"precipitation"}>Precipitation: {`${rain ? rain : 0}%`}</div>
+                            <div className={"humidity"}>Humidity: {`${humidity}%`}</div>
+                            <div className={"wind"}>Wind: {`${wind_speed} mph`}</div>
+                            <div className={"buttons"}>
+                                <button>Temperature</button>
+                                <button>Precipitation</button>
+                                <button>Wind</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={"bottom"}>
+                        {dailyCards}
                     </div>
                 </div>
             </div>
@@ -94,5 +134,30 @@ function Weather({isGoogleReady, isSearchMode, address}) {
     }
     return null;
 }
+
+function DailyWeather({temp,weather,dt, active, handleClick}) {
+    let {min,max} = temp;
+    min = Math.round(min);
+    max = Math.round(max);
+    let icon;
+    if (weather && weather.length) {
+        icon = weather[0].icon;
+    }
+    const iconURL = `url(http://openweathermap.org/img/wn/${icon}@2x.png)`;
+    const today = new Date(dt*1000);
+    const weeks = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const day = weeks[today.getDay()].substring(0,3);
+    return (
+        <div className={`daily-weather ${active ? 'active' : ''}`} onClick={handleClick}>
+            <div className={"day"}>{day}</div>
+            {icon ? <div className={"image"} style={{backgroundImage:iconURL}}/> : null}
+            <div className={"degrees"}>
+                <span className={"max"}>{max}°</span>
+                <span>{min}°</span>
+            </div>
+        </div>
+    )
+}
+
 
 export default Weather;

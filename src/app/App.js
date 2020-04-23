@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import Weather from "../weather/weather";
-import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom';
+import {Link, Route, Switch, useHistory} from 'react-router-dom';
 import Script from 'react-load-script';
 import './App.scss';
 
@@ -12,26 +12,45 @@ function App() {
 
   const API_KEY = "AIzaSyAuthaYK4K1L1pOCEDjPbKVlnL99KxvfmI";
   const script_url = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places`;
+  const history = useHistory();
 
   // COMPONENT STATE ---------------------------------------------------------------------------------------------------
 
   const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const [isFocus, setIsFocus] = useState(false);
   const [address, setAddress] = useState(null);
+  const [inputVal, setInputVal] = useState('');
   const inputRef = useRef(null);
 
   const props = {
     isGoogleReady,
-    address
+    address,
+    inputVal,
+    setInputVal
   };
 
+  const handleOnKeyUp = e => {
+    if (e.keyCode === 13) {
+      setAddress(inputVal);
+      history.push('/search');
+    }
+  };
   return (
-      <Router>
         <div className="App">
           <Script url={script_url} onLoad={() => setIsGoogleReady(true)}/>
           <div className={"search"}>
-            <input type={"text"} ref={inputRef}/>
+            <div className={`search-container ${isFocus ? 'focus' : ''}`}>
+              <input type={"text"}
+                     ref={inputRef}
+                     value={inputVal}
+                     spellCheck={false}
+                     onChange={e => setInputVal(e.target.value)}
+                     onKeyUp={handleOnKeyUp}
+                     onFocus={() => setIsFocus(true)}
+                     onBlur={() => setIsFocus(false)}/>
+            </div>
             <Link to={'/search'}>
-              <button onClick={() => {setAddress(inputRef.current.value)}}>Search</button>
+              <button onClick={() => {setAddress(inputVal)}}>Search</button>
             </Link>
           </div>
             <Switch>
@@ -43,8 +62,6 @@ function App() {
               </Route>
             </Switch>
         </div>
-      </Router>
-
   );
 }
 

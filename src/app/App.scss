@@ -8,38 +8,46 @@
   .search {
     display: flex;
     flex-direction: column;
-    width: 500px;
 
-    input {
-      border: 1px solid #eee;
-      padding: 10px;
-      border-radius: 20px;
+    &-container {
       margin-bottom: 10px;
+      background: #fff;
+      border: 1px solid #dfe1e5;
+      box-shadow: none;
+      height: 39px;
+      width: 690px;
+      border-radius: 24px;
+      z-index: 3;
+      padding: 0 20px;
+
+      &.focus {
+        box-shadow: 0 1px 6px 0 rgba(32,33,36,0.28);
+      }
+
+      input {
+        background-color: transparent;
+        border: none;
+        margin: 0;
+        height: 39px;
+        padding: 0;
+        color: rgba(0,0,0,.87);
+        word-wrap: break-word;
+        outline: none;
+        width: 100%;
+        -webkit-tap-highlight-color: transparent;
+      }
     }
 
     a {
       width: fit-content;
       align-self: flex-end;
-    }
-}
 
-  .weather {
-    padding: 20px 16px 24px 16px;
-    width: 618px;
-    border: 1px solid #dfe1e5;
-    border-radius: 8px;
-    background-color: white;
-    margin-top: 50px;
-    text-transform: capitalize;
-
-    .current {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-gap: 220px;
-
-      .left > *,
-      .right > * {
-        width: fit-content;
+      button {
+        padding: 10px 20px;
+        border-radius: 30px;
+        border: none;
+        background-color: #eee;
+        color: rgba(0, 0, 0, 0.8);
       }
     }
   }
