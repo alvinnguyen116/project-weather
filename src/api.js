@@ -13,7 +13,16 @@ async function getJSON(url) {
     }
 }
 
-export function getWeather({lat,lon}) {
+export const UNIT = Object.freeze({
+   FAHRENHEIT: "imperial",
+   CELSIUS: "metric",
+   KELVIN: "kelvin"
+});
+
+export function getWeather({lat,lon}, units) {
     const API_KEY = "86ad87c076e4ca1d5d30d98e7ce72ced";
-    return getJSON(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+    if (units === UNIT.KELVIN) {
+        return getJSON(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+    }
+    return getJSON(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=${units}&appid=${API_KEY}`);
 }
