@@ -17,6 +17,7 @@ function App() {
   // COMPONENT STATE ---------------------------------------------------------------------------------------------------
 
   const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const [isD3Ready, setIsD3Ready] = useState(false);
   const [isFocus, setIsFocus] = useState(false);
   const [address, setAddress] = useState(null);
   const [inputVal, setInputVal] = useState('');
@@ -24,6 +25,7 @@ function App() {
 
   const props = {
     isGoogleReady,
+    isD3Ready,
     address,
     inputVal,
     setInputVal
@@ -38,6 +40,7 @@ function App() {
   return (
         <div className="App">
           <Script url={script_url} onLoad={() => setIsGoogleReady(true)}/>
+          <Script url="https://d3js.org/d3.v4.min.js" onLoad={() => setIsD3Ready(true)}/>
           <div className={"search"}>
             <div className={`search-container ${isFocus ? 'focus' : ''}`}>
               <input type={"text"}

@@ -1,18 +1,26 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import {getWeather, UNIT} from "../api";
 import './weather.scss';
 
 /**
  * @return {null}
  */
-function Weather({isGoogleReady, isSearchMode, address, setInputVal, inputVal}) {
+function Weather({isGoogleReady, isD3Ready, isSearchMode, address, setInputVal, inputVal}) {
 
     const [currentLocation, setCurrentLocation] = useState();
     const [currentUnit, setCurrentUnit] = useState(UNIT.FAHRENHEIT);
     const [currentWeather, setCurrentWeather] = useState(null);
     const [currentDay, setCurrentDay] = useState(0);
+    const svgRef = useRef(null);
 
     // SIDE EFFECTS ----------------------------------------------------------------------------------------------------
+
+    useEffect(() => {
+        /*global d3*/
+        if(isD3Ready && currentWeather && currentWeather.hourly && currentWeather.hourly.length) {
+            d3.select(svgRef.current).attr("width", 400).attr("height", 200);
+        }
+    }, [currentWeather]);
 
     useEffect(() => {
         if (currentLocation) {
@@ -97,7 +105,6 @@ function Weather({isGoogleReady, isSearchMode, address, setInputVal, inputVal}) 
             <DailyWeather {...props} key={props.dt} active={currentDay === i} handleClick={() => setCurrentDay(i)}/>
         );
 
-
         return (
             <div className={'weather'}>
                 <div className={'current'}>
@@ -125,6 +132,7 @@ function Weather({isGoogleReady, isSearchMode, address, setInputVal, inputVal}) 
                             </div>
                         </div>
                     </div>
+                    <svg ref={svgRef}/>
                     <div className={"bottom"}>
                         {dailyCards}
                     </div>
