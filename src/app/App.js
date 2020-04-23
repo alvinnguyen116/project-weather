@@ -2,8 +2,11 @@ import React, {useState, useEffect} from 'react';
 import {getWeather} from "../api";
 import Script from 'react-load-script';
 import './App.css';
-
-function App() {
+/**
+ * @param isSearchMode {boolean}
+ * @desc A top level app component for the weather app.
+ */
+function App({isSearchMode}) {
   // CONSTANTS ---------------------------------------------------------------------------------------------------------
 
   const API_KEY = "AIzaSyAuthaYK4K1L1pOCEDjPbKVlnL99KxvfmI";
@@ -11,19 +14,26 @@ function App() {
   // COMPONENT STATE ---------------------------------------------------------------------------------------------------
 
   const [isGoogleReady, setIsGoogleReady] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState({lat: null, lon: null});
+  const [currentLocation, setCurrentLocation] = useState();
 
   // SIDE EFFECTS ------------------------------------------------------------------------------------------------------
 
   useEffect(() => {
-    if (currentLocation && currentLocation.lat && currentLocation.lon) {
+    if (currentLocation) {
       getWeather(currentLocation).then(console.log);
     }
   }, [currentLocation]);
 
   useEffect(() => {
     if (isGoogleReady) {
-      getLocation('45 muirfield ct', setCurrentLocation);
+      if (isSearchMode) {
+        getLocation('2119 University Ave ', setCurrentLocation);
+      } else {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const {latitude: lat, longitude: lon} = pos.coords;
+          setCurrentLocation({lat, lon});
+        })
+      }
     }
   }, [isGoogleReady]);
 
@@ -47,7 +57,6 @@ function App() {
       }
       try {
         const {description: address} = predictions[0];
-        console.log(address);
         geoCoderService.geocode({address}, (res) => {
           if (res && res.length) {
             const {location} = res[0].geometry;
