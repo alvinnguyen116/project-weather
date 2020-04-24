@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from "react";
+import React, {useEffect, useState, useRef, useMemo} from "react";
 import {getWeather, UNIT} from "../api";
 import './weather.scss';
 
@@ -128,8 +128,10 @@ function Weather({isGoogleReady, isD3Ready, isSearchMode, address, setInputVal, 
         autocompleteService.getQueryPredictions({input}, getLocationCB.bind(null, setCurrentLocation));
     }
 
+    const title = useMemo(() => inputVal.split(',').slice(-3).join(','), [currentWeather]);
+
     if (currentWeather) {
-        const {current, daily} = currentWeather;
+        const {current, daily, hourly} = currentWeather;
         let {humidity, rain, dt, temp, wind_speed, weather} = current;
         temp = Math.round(temp);
         let description;
@@ -143,7 +145,6 @@ function Weather({isGoogleReady, isD3Ready, isSearchMode, address, setInputVal, 
         const weeks = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const hours = today.getHours();
         const todayString = `${weeks[today.getDay()]} ${hours % 12 ? hours % 12 : 12}:00 ${hours > 11 ? 'PM' : 'AM'}`;
-        const title = inputVal.split(',').slice(1,3).join(',');
 
         let fspan = <span>°F</span>;
         let cspan = <span>°C</span>;
@@ -156,6 +157,8 @@ function Weather({isGoogleReady, isD3Ready, isSearchMode, address, setInputVal, 
         const dailyCards = daily.map((props,i) =>
             <DailyWeather {...props} key={props.dt} active={currentDay === i} handleClick={() => setCurrentDay(i)}/>
         );
+
+        const timeLabels = hourly.slice(0,24).filter((item,i) => i % 3 === 1).map(({dt}) => <TimeLabel key={dt} dt={dt}/>);
 
         return (
             <div className={'weather'}>
@@ -185,6 +188,9 @@ function Weather({isGoogleReady, isD3Ready, isSearchMode, address, setInputVal, 
                         </div>
                     </div>
                     <svg ref={svgRef}/>
+                    <div className={"time-labels"}>
+                        {timeLabels}
+                    </div>
                     <div className={"bottom"}>
                         {dailyCards}
                     </div>
@@ -215,6 +221,17 @@ function DailyWeather({temp,weather,dt, active, handleClick}) {
                 <span className={"max"}>{max}°</span>
                 <span>{min}°</span>
             </div>
+        </div>
+    )
+}
+
+function TimeLabel({dt}) {
+    const today = new Date(dt*1000);
+    const hour = today.getHours();
+
+    return (
+        <div className={"time-label"}>
+            {hour % 12 === 0 ? 12 : hour % 12} {hour > 11 ? 'PM' : 'AM'}
         </div>
     )
 }
